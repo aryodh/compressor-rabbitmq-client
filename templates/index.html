@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+	<title>File Compressor</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" />
+</head>
+
+<body>
+	<div class="row">
+		<div class="col-md-4"></div>
+		<div class="col-md-4" style="padding: 30px; align-items: center;">
+			<div class="card">
+				<div class="head-line">
+					<h4>File Compressor</h4>
+					<hr />
+					<img src="/static/images/undraw_collecting_fjjl.png" style="width: 50%;" class="asset" alt="">
+					<div class="form-row align-items-center px-4 mb-4">
+						<form id="upload-file" method="post" enctype="multipart/form-data" style="width: 100%;">
+							<input type="file" name="file" class="mb-2"
+								style="border: 1px solid #dfdfdf; width: 100%; padding: 0.5em; border-radius: 5px;" />
+						</form>
+						<button type="button" id="convert" onclick="submit()" class="btn btn-primary btn-lg btn-block">
+							Upload
+						</button>
+					</div>
+
+					<div class="px-4 mb-4 progressbar" style="text-align: left;" hidden>
+						<label class="mb-1 status">Compressing...</label>
+						<div class="progress">
+							<div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0"
+								aria-valuemax="100" style="width:0%">
+								%
+							</div>
+						</div>
+					</div>
+					<div class="px-4 mb-4">
+						<div id="result">
+
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-4"></div>
+	</div>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js"></script>
+	<script>
+		function submit() {
+			document
+				.getElementsByClassName("progressbar")[0]
+				.removeAttribute("hidden");
+			document
+				.getElementsByClassName("btn-primary")[0]
+				.setAttribute("disabled", true);
+			var form_data = new FormData($("#upload-file")[0]);
+			var url = "/upload/?uniqueId={{uniqueId}}";
+			$.ajax({
+				type: "POST",
+				url: url,
+				data: form_data,
+				contentType: false,
+				cache: false,
+				processData: false,
+				success: function (data) {
+					console.log(data);
+				}
+			});
+		}
+
+		function increase() {
+			const progressbar = document.getElementsByClassName("progress-bar")[0];
+			const progress =
+				parseInt(progressbar.getAttribute("aria-valuenow")) + 10;
+			if (progress <= 100) {
+				progressbar.setAttribute("aria-valuenow", progress);
+				progressbar.setAttribute("style", "width:" + progress + "%;");
+				progressbar.innerHTML = progress + "%";
+				if (progress == 100) {
+					document.getElementsByClassName("status")[0].innerHTML =
+						"Compresed!";
+				}
+			}
+		}
+
+		// client.subscribe(url, function (message) {
+		//     if (message.body) {
+		//         alert("new message with body");
+		//     } else {
+		//         alert("new message without body");
+		//     }
+		// });
+		function bin2string(array) {
+			var result = "";
+			for (var i = 0; i < array.length; ++i) {
+				result += String.fromCharCode(array[i]);
+			}
+			return result;
+		}
+
+		function addResult(link) {
+			document.getElementById("result").innerHTML = '<div class="card pt-2">' +
+				"<h6> Here's the link to download </h6>" +
+				'<a style="font-size: 12px; color: gray; margin-bottom:0.5em;" href="http://127.0.0.1:5050/' + link +
+				'.zip">' + link +
+				'.zip </a>' +
+				'</div>'
+		}
+
+		function subscribe() {
+			callback = function (message) {
+				// called when the client receives a STOMP message from the server
+				if (message.body) {
+					var msg = message.body.split(" ");
+					increase();
+					if (msg[0] == "done") {
+						addResult(msg[1]);
+					}
+				}
+			};
+			var subscription = client.subscribe(
+				"/exchange/1706039515/{{uniqueId}}",
+				callback
+			);
+		}
+
+		var ws = new WebSocket("ws://152.118.148.95:15674/ws");
+		var client = Stomp.over(ws);
+		var on_connect = function () {
+			console.log("connected");
+			subscribe();
+		};
+		var on_error = function () {
+			console.log("error");
+		};
+		client.connect("0806444524", "0806444524", on_connect, on_error, "/0806444524");
+		// client.connect();
+	</script>
+</body>
+
+</html>
+
+<style>
+	.head-line {
+		margin-top: 32px;
+		text-align: center;
+	}
+
+	body {
+		/* background-image: url('/static/images/bg-img.jpg'); */
+		background-size: cover;
+		background-position: top;
+		overflow-x: hidden;
+		background-color: #1b1b1b;
+	}
+
+	hr {
+		margin-top: 1rem;
+		margin-bottom: 1rem;
+		border: 0;
+		border-top: 1px solid rgba(0, 0, 0, 0.1);
+	}
+
+	.asset {
+		width: 75%;
+	}
+</style>
