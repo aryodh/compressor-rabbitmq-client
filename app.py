@@ -14,15 +14,18 @@ def randomId():
 
 @app.route('/upload/', methods=['POST'])
 def upload():
-    uniqueId = request.args.to_dict().get("uniqueId")
-    temp = request.files.get('file')
-    url = "http://152.118.148.95:20644/compress"
-    files = {"file": (temp.filename, temp.stream, temp.mimetype)}
+    try:
+        uniqueId = request.args.to_dict().get("uniqueId")
+        temp = request.files.get('file')
+        url = "http://152.118.148.95:20644/compress"
+        files = {"file": (temp.filename, temp.stream, temp.mimetype)}
+    except:
+        print("failed")
     r = requests.post(url, files=files, headers={"X-ROUTING-KEY":uniqueId})
-    # isthisFile.save("./"+isthisFile.filename)
+        # isthisFile.save("./"+isthisFile.filename)
     return "success"
 
 if __name__ == '__main__':
-    app.run(port=20643)
+    app.run(host='0.0.0.0', port=20643)
 
 
